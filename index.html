@@ -1,0 +1,79 @@
+<body onload="start()">
+	<canvas id="glcanvas" width="640" height="480">
+		Your browser doesn't support the <code>&lt;canvas&gt;</code> element.
+	</canvas>
+</body>
+
+<script type="text/javascript">
+	var gl;
+	function initShaders() {
+		var fragmentShader = getShader(gl, "shader-fs");
+		var vertexShader = getShader(gl, "shader-vs");
+
+		shaderProgram = gl.createProgram();
+		gl.attachShader(shaderProgram, vertexShader);
+		gl.attachShader(shaderProgram, fragmentShader);
+		gl.linkProgram(shaderProgram);
+
+		if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
+			alert("Unable to initialize the shader program");
+		}
+
+		gl.useProgram(shaderProgram);
+
+		vertexPositionAttribute = gl.getAttributeLocation(shaderProgram, "aVertexPosition");
+		gl.enableVertexAttribArray(vertexPositionAttribute);
+	}
+
+	function getShader(gl, id) {
+		var shaderScript, theSource, currentChild, shader;
+		shaderScript = document.getElementById(id);
+
+		if (!shaderScript) {
+			return null;
+		}
+
+		theSource = "";
+		currentChild = shaderScript.firstChild;
+
+		while(currentChild) {
+			if (currentChild.nodeType == currentChild.TEXT_NODE) {
+				theSource += currentChild.textContent;
+			}
+
+			currentChild = currentChild.nextSibling;
+		}
+	}
+
+	function initWebGL(canvas) {
+		gl = null;
+
+		try {
+			gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+		} catch(e) {
+			console.log("Can't get WebGL context");
+		}
+
+		// If we don't have a GL context, give up now
+		if (!gl) {
+			alert("Unable to initialize WebGL. Your browser may not support it.");
+			gl = null;
+		}
+
+		return gl;
+	}
+
+	function start() {
+		var canvas = document.getElementById('glcanvas');
+		gl = initWebGL(canvas);
+
+		if (gl) {
+			gl.clearColor(1.0, 1.0, 0.0, 1.0);
+			gl.enable(gl.DEPTH_TEST);
+			gl.depthFunc(gl.LEQUAL);
+			gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+		}
+	}
+	
+
+</script>
