@@ -5,33 +5,40 @@
 	<title>WebGL</title>
 	<script src="main.js" type="text/javascript"></script>
 	<script id="shader-vs" type="x-shader/x-vertex">
-		attribute vec2 position;
-		uniform vec2 u_resolution;	
+		attribute vec3 a_position;
+		attribute vec4 a_color;
 
+		uniform vec3 u_resolution;	
+		uniform vec3 u_translation;
+
+		varying lowp vec4 vColor;
 		void main(void) {
-			vec2 zeroToOne = position / u_resolution;
+			vec3 position = a_position + u_translation;
+			vec3 zeroToOne = position / u_resolution;
 
 		   	// convert from 0->1 to 0->2
-   		   	vec2 zeroToTwo = zeroToOne * 2.0;
+   		   	vec3 zeroToTwo = zeroToOne * 2.0;
 
    			// convert from 0->2 to -1->+1 (clipspace)
-   			vec2 clipSpace = zeroToTwo - 1.0;
+   			vec3 clipSpace = zeroToTwo - 1.0;
 
-			gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
+			gl_Position = vec4(clipSpace*vec3(1, -1, 1), 1);
+			vColor = a_color;
 		}
 	</script>
 	<script id="shader-fs" type="x-shader/x-fragment">
-		precision mediump float;
-
-		uniform vec4 u_color;
+		varying lowp vec4 vColor;
+		/*precision mediump float;
+		uniform vec4 u_color;*/
 
 		void main(void) {
-			gl_FragColor = u_color;
+			gl_FragColor = vColor;
 		}
 	</script>
+	<link rel="stylesheet" type="text/css" href="game.css">
 </head>
 <body onload="start()">
-	<canvas id="canvas" width="1024" height="768" style='position: absolute; background-color: red;'>
+	<canvas id="canvas" width="800" height="800">
 		Your browser doesn't support canvas tag;
 	</canvas>
 </body>

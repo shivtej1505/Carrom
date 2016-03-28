@@ -4,15 +4,33 @@ var shaderProgram;
 var vertexPositionAttribute;
 var vertexColorAttribute
 
+var translationLocation;
+
+var triangleData;
+
 function start() {
 	canvas = document.getElementById('canvas');
-	canvas.WIDTH = 1024;
-	canvas.HEIGHT = 768;
+	canvas.WIDTH = 800;
+	canvas.HEIGHT = 800;
 
 	initWebGL();
 	initShader();
-	var shapeBuffers = initTriangle();
-	drawTriangle(shapeBuffers);
+	initCanvas();
+	
+	var shapeBuffers;
+	var x = randomInt(800)
+	var y = randomInt(800);
+	var z = randomInt(80);
+	
+	triangleData = initTriangle(x, y, z,40, 50);
+	initShapes();
+	
+	//drawTriangle(shapeBuffers);
+	setInterval(main, 15);
+}
+
+function randomInt(range) {
+	return Math.floor(Math.random() * range);
 }
 
 function initWebGL() {
@@ -42,11 +60,11 @@ function initShader() {
 		alert('Unable to initialize the shader program');
 	}
 
-	vertexPositionAttribute = gl.getAttribLocation(shaderProgram, "position"); 
+	vertexPositionAttribute = gl.getAttribLocation(shaderProgram, "a_position"); 
 	gl.enableVertexAttribArray(vertexPositionAttribute);
 
-	//vertexColorAttribute = gl.getAttribLocation(shaderProgram, "color");
-	//gl.enableVertexAttribArray(vertexColorAttribute);
+	vertexColorAttribute = gl.getAttribLocation(shaderProgram, "a_color");
+	gl.enableVertexAttribArray(vertexColorAttribute);
 
 	gl.useProgram(shaderProgram);
 }
@@ -90,31 +108,47 @@ function getShader(id) {
 	return shader;
 }
 
-function initTriangle() {
+function initCanvas() {
+	gl.clearColor(0.0, 0.0, 0.0, 0.0);
+	gl.enable(gl.DEPTH_TEST);
+	gl.depthFunc(gl.LEQUAL);
+
+	gl.viewport(0.0, 0.0, canvas.WIDTH, canvas.HEIGHT);
+	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+	translationLocation = gl.getUniformLocation(shaderProgram, "u_translation");
+}
+
+function initShapes(argument) {
+	triangleData.translation = [0, 0, 0];	
+}
+
+function initTriangle(x, y, z, l, h) {
 	var vertices = [
-		0, 0,
-		100, 100,
-		100, 0
+		x, y, z,
+		x+l, y, z, 
+		x+l, y+h, z
 	]
 	var resolutionLocation = gl.getUniformLocation(shaderProgram, "u_resolution");
-	gl.uniform2f(resolutionLocation, canvas.WIDTH, canvas.HEIGHT);
+	gl.uniform3f(resolutionLocation, canvas.WIDTH, canvas.HEIGHT, 100);
+	
 	var vertexBuffer = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
 	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices),
 		gl.STATIC_DRAW);
 
-	var colorLocation = gl.getUniformLocation(shaderProgram, "u_color");
-	gl.uniform4f(colorLocation, Math.random(), Math.random(), Math.random(), 1);
+	//var colorLocation = gl.getUniformLocation(shaderProgram, "u_color");
+	//gl.uniform4f(colorLocation, Math.random(), Math.random(), Math.random(), 1);
+	
 	var colour = [
-		0, 0, 1,
-		0, 1, 0,
-		1, 0, 0
+		0, 0, 1, 1,
+		0, 0, 1, 1,
+		0, 0, 1, 1
 	];
 
 	var colourBuffer = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, colourBuffer);
-	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colour),
-		gl.STATIC_DRAW);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colour), gl.STATIC_DRAW);
 
 	return [vertexBuffer, colourBuffer];
 }
@@ -123,19 +157,31 @@ function drawTriangle(shapeBuffers) {
 	vertexBuffer = shapeBuffers[0];
 	colourBuffer = shapeBuffers[1];
 
-	gl.clearColor(0.0, 0.0, 0.0, 0.0);
-	console.log(canvas.WIDTH, canvas.HEIGHT);
-	gl.viewport(0.0, 0.0, canvas.WIDTH, canvas.HEIGHT);
-	gl.clear(gl.COLOR_BUFFER_BIT);
+	var translation = triangleData.translation;
+	gl.uniform3fv(translationLocation, translation);	
+
 	// drawing
 	gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-	gl.vertexAttribPointer(vertexPositionAttribute, 2,
-		gl.FLOAT, false, 0, 0);
+	gl.vertexAttribPointer(vertexPositionAttribute, 3, gl.FLOAT, false, 0, 0);
 	
-	//gl.bindBuffer(gl.ARRAY_BUFFER, colourBuffer);
-	//gl.vertexAttribPointer(colourBuffer, 3, gl.FLOAT, false, 0, 0);
-	//gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER)
-	//gl.drawElements(gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, 0);
-	//gl.flush();
+	gl.bindBuffer(gl.ARRAY_BUFFER, colourBuffer);
+	gl.vertexAttribPointer(vertexColorAttribute, 4, gl.FLOAT, false, 0, 0);
+	
 	gl.drawArrays(gl.TRIANGLE_STRIP, 0, 3);
+}
+
+function main() {
+
+	if (triangleData.translation[0] < 100) {
+		triangleData.translation[0] += 1.0;
+		triangleData.translation[1] += 1.0;
+	} else {
+		triangleData.translation[0] = -100;
+		triangleData.translation[1] = -100;
+	}
+
+	draw();
+}
+function  draw() {
+	drawTriangle(triangleData);
 }
