@@ -15,6 +15,9 @@ var rectData;
 var boardBorder = [];
 var centralCircle = [];
 
+var goties = [];
+var strikerData;
+
 function start() {
 	canvas = document.getElementById('canvas');
 	canvas.WIDTH = 800;
@@ -25,10 +28,69 @@ function start() {
 	initCanvas();
 	
 	initShapes();
+
+	addEventListeners();
 	
 	//drawTriangle(shapeBuffers);
 	setInterval(main, 15);
 }
+
+function addEventListeners() {
+	canvas.addEventListener("mousedown", mouseDown, false);
+	canvas.addEventListener("mouseup", mouseUp, false);
+	canvas.addEventListener("mouseout", mouseUp, false);
+	canvas.addEventListener("mousemove", mouseMove, false);
+}
+
+function moveStrikerLeft() {
+	strikerData[3][0] -= 5.0;
+}
+
+function moveStrikerRight() {
+	strikerData[3][0] += 5.0;
+}
+
+document.onkeydown = function(e) {
+	e = e || window.event;
+    switch(e.keyCode) {
+        case 37: // left
+        moveStrikerLeft();
+        break;
+
+        case 38: // up
+        console.log("up");
+        break;
+
+        case 39: // right
+        moveStrikerRight();
+        break;
+
+        case 40: // down
+        console.log("down");
+        break;
+
+        default: return; // exit this handler for other keys
+    }
+    e.preventDefault(); // prevent the default action (scroll / move caret)
+};
+
+
+function mouseDown() {
+	console.log("down");
+}
+
+function mouseUp() {
+	console.log("up");
+}
+
+function mouseOut() {
+	console.log("out");
+}
+
+function mouseMove() {
+	console.log("move");
+}
+
 
 function randomInt(range) {
 	return Math.floor(Math.random() * range);
@@ -195,6 +257,28 @@ function initCircle(x, y, z, radius, num_triangle, isColor = 0) {
 		114/255, 102/255, 106/255, 1,
 		114/255, 102/255, 106/255, 1
 	];
+
+	var white_goti = [
+		254/255, 199/255, 161/255, 1,
+		254/255, 199/255, 161/255, 1,
+		254/255, 199/255, 161/255, 1,
+		254/255, 199/255, 161/255, 1
+	];
+
+	var queen_goti = [
+		231/255, 22/255, 57/255, 1,
+		231/255, 22/255, 57/255, 1,
+		231/255, 22/255, 57/255, 1,
+		231/255, 22/255, 57/255, 1
+	];
+
+	var striker = [
+		0, 109/255, 102/255, 1,
+		0, 109/255, 102/255, 1,
+		0, 109/255, 102/255, 1,
+		0, 109/255, 102/255, 1
+	];
+
 	for (var i=1; i<=num_triangle; i++) {
 		vertex = [
 			x, y, z,
@@ -205,8 +289,16 @@ function initCircle(x, y, z, radius, num_triangle, isColor = 0) {
 		vertices = vertices.concat(vertex);
 		if (isColor == 0)
 			colours = colours.concat(base_colour);
-		else
+		else if (isColor == 1)
 			colours = colours.concat(colour);
+		else if (isColor == 2)
+			colours = colours.concat(black_goti);
+		else if (isColor == 3)
+			colours = colours.concat(white_goti);
+		else if (isColor == 4)
+			colours = colours.concat(queen_goti);
+		else if (isColor == 5)
+			colours = colours.concat(striker);
 	}
 	
 	var vertexBuffer = gl.createBuffer();
@@ -276,8 +368,8 @@ function initRect(x, y, z, l, b) {
 function drawRect(shapeBuffers) {
 	vertexBuffer = shapeBuffers[0];
 	colourBuffer = shapeBuffers[1];
+	var translation = shapeBuffers[2];
 
-	var translation = shapeBuffers.translation;
 	gl.uniform3fv(translationLocation, translation);	
 
 	// drawing
@@ -302,6 +394,8 @@ function initShapes() {
 
 	makeBoardBorder();
 	makeCentralCircle();
+	makeGotis();
+	makeStriker();
 }
 
 function makeBoardBorder() {
@@ -320,7 +414,6 @@ function makeBoardBorder() {
 	rectangle = initRect(0, 0, 0, 40, 800);
 	rectangle[2] = [0, 0, 0];
 	boardBorder.push(rectangle);
-
 }
 
 function makeCentralCircle() {
@@ -331,8 +424,6 @@ function makeCentralCircle() {
 	circle = initCircle(400, 400, 0, 78, 360);
 	circle[3] = [0, 0, 0];
 	centralCircle.push(circle);
-
-	console.log(centralCircle);
 }
 
 function drawCentralCircle() {
@@ -341,24 +432,66 @@ function drawCentralCircle() {
 }
 
 function drawBoardBorder() {
-	var shapeBuffers;
-	for (var i=0; i<4; i++) {
-		shapeBuffers =  boardBorder[i];
-		vertexBuffer = shapeBuffers[0];
-		colourBuffer = shapeBuffers[1];
-		translation = shapeBuffers[2];
+	for (var i=0; i<4; i++)
+		drawRect(boardBorder[i]);
+}
 
-		gl.uniform3fv(translationLocation, translation);	
+function makeGotis() {
+	var root_two = 1.414;
+	// black goti
+	var circle = initCircle(400, 400, 0, 20, 360,2);
+	circle[3] = [0, -60, 0];
+	goties.push(circle);
 
-		// drawing
-		gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-		gl.vertexAttribPointer(vertexPositionAttribute, 3, gl.FLOAT, false, 0, 0);
-		
-		gl.bindBuffer(gl.ARRAY_BUFFER, colourBuffer);
-		gl.vertexAttribPointer(vertexColorAttribute, 4, gl.FLOAT, false, 0, 0);
-		
-		gl.drawArrays(gl.TRIANGLES, 0, 6);
-	}
+	circle = initCircle(400, 400, 0, 20, 360,2);
+	circle[3] = [0, 60, 0];
+	goties.push(circle);
+
+	circle = initCircle(400, 400, 0, 20, 360,2);
+	circle[3] = [60, 0, 0];
+	goties.push(circle);
+
+	circle = initCircle(400, 400, 0, 20, 360,2);
+	circle[3] = [-60, 0, 0];
+	goties.push(circle);
+
+	// white goti
+	circle = initCircle(400, 400, 0, 20, 360,3);
+	circle[3] = [30*root_two, 30*root_two, 0];
+	goties.push(circle);
+
+	circle = initCircle(400, 400, 0, 20, 360,3);
+	circle[3] = [-30*root_two, 30*root_two, 0];
+	goties.push(circle);
+
+	circle = initCircle(400, 400, 0, 20, 360,3);
+	circle[3] = [-30*root_two, -30*root_two, 0];
+	goties.push(circle);
+
+	circle = initCircle(400, 400, 0, 20, 360,3);
+	circle[3] = [30*root_two, -30*root_two, 0];
+	goties.push(circle);
+
+	// queen
+	circle = initCircle(400, 400, 0, 20, 360,4);
+	circle[3] = [0, 0, 0];
+	goties.push(circle);
+}
+
+function makeStriker() {
+	// striker
+	strikerData = initCircle(400, 400, 0, 25, 360,5);
+	strikerData[3] = [0, 280, 0];
+	console.log(strikerData);
+}
+
+function drawStriker() {
+	drawCircle(strikerData);
+}
+
+function drawGotis() {
+	for (var i=0; i<9; i++)
+		drawCircle(goties[i]);
 }
 
 function main() {
@@ -381,4 +514,6 @@ function draw() {
 
 	drawBoardBorder();
 	drawCentralCircle();
+	drawGotis();
+	drawStriker();
 }
