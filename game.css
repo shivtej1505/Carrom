@@ -1,8 +1,8 @@
 #canvas {
 	position: absolute;
-    top: 25%;
-    left: 25%;
-    margin-top: -10%;
-    margin-left: -15%;
+    top: 15%;
+    left: 10%;
+    margin-top: -100px;
+    margin-left: -100px;
     background-color: #F7E7CD;
 }
