@@ -18,6 +18,11 @@ var centralCircle = [];
 var goties = [];
 var strikerData;
 
+var isStrikerMoving = false;
+var releaseAngle = 0;
+var velocity;
+var power = 8.0;
+
 function start() {
 	canvas = document.getElementById('canvas');
 	canvas.WIDTH = 800;
@@ -43,11 +48,24 @@ function addEventListeners() {
 }
 
 function moveStrikerLeft() {
+	strikerData.x -= 5.0;
 	strikerData[3][0] -= 5.0;
 }
 
 function moveStrikerRight() {
+	strikerData.x += 5.0;
 	strikerData[3][0] += 5.0;
+}
+
+function releaseStriker() {
+	isStrikerMoving = true;
+	if (releaseAngle >= 0) {
+		velocity.x = (power * Math.cos(releaseAngle));
+		velocity.y = -(power * Math.sin(releaseAngle));
+	} else {
+		velocity.x = -(power * Math.cos(releaseAngle));
+		velocity.y = (power * Math.sin(releaseAngle));
+	}
 }
 
 document.onkeydown = function(e) {
@@ -69,6 +87,11 @@ document.onkeydown = function(e) {
         console.log("down");
         break;
 
+        case 13:
+        releaseStriker();
+        console.log("enter");
+        break;
+
         default: return; // exit this handler for other keys
     }
     e.preventDefault(); // prevent the default action (scroll / move caret)
@@ -87,8 +110,17 @@ function mouseOut() {
 	console.log("out");
 }
 
-function mouseMove() {
-	console.log("move");
+function mouseMove(event) {
+	var rect = canvas.getBoundingClientRect();
+	var mouse_x = event.clientX - rect.x; 
+	var mouse_y = event.clientY - rect.y; 
+	//console.log(mouse_x, mouse_y);
+	if (!isStrikerMoving) {
+		var x_diff = mouse_x - strikerData.x ;
+		var y_diff = mouse_y - strikerData.y ;
+		releaseAngle = -Math.atan(y_diff/x_diff);
+	}
+	//console.log(releaseAngle * (180/Math.PI));
 }
 
 
@@ -441,40 +473,76 @@ function makeGotis() {
 	// black goti
 	var circle = initCircle(400, 400, 0, 20, 360,2);
 	circle[3] = [0, -60, 0];
+	circle.x = 400 + circle[3][0];
+	circle.y = 400 + circle[3][1];
+	circle.vel_x = 0;
+	circle.vel_y = 0;
 	goties.push(circle);
 
 	circle = initCircle(400, 400, 0, 20, 360,2);
 	circle[3] = [0, 60, 0];
+	circle.x = 400 + circle[3][0];
+	circle.y = 400 + circle[3][1];
+	circle.vel_x = 0;
+	circle.vel_y = 0;
 	goties.push(circle);
 
 	circle = initCircle(400, 400, 0, 20, 360,2);
 	circle[3] = [60, 0, 0];
+	circle.x = 400 + circle[3][0];
+	circle.y = 400 + circle[3][1];
+	circle.vel_x = 0;
+	circle.vel_y = 0;
 	goties.push(circle);
 
 	circle = initCircle(400, 400, 0, 20, 360,2);
 	circle[3] = [-60, 0, 0];
+	circle.x = 400 + circle[3][0];
+	circle.y = 400 + circle[3][1];
+	circle.vel_x = 0;
+	circle.vel_y = 0;
 	goties.push(circle);
 
 	// white goti
 	circle = initCircle(400, 400, 0, 20, 360,3);
 	circle[3] = [30*root_two, 30*root_two, 0];
+	circle.x = 400 + circle[3][0];
+	circle.y = 400 + circle[3][1];
+	circle.vel_x = 0;
+	circle.vel_y = 0;
 	goties.push(circle);
 
 	circle = initCircle(400, 400, 0, 20, 360,3);
 	circle[3] = [-30*root_two, 30*root_two, 0];
+	circle.x = 400 + circle[3][0];
+	circle.y = 400 + circle[3][1];
+	circle.vel_x = 0;
+	circle.vel_y = 0;
 	goties.push(circle);
 
 	circle = initCircle(400, 400, 0, 20, 360,3);
 	circle[3] = [-30*root_two, -30*root_two, 0];
+	circle.x = 400 + circle[3][0];
+	circle.y = 400 + circle[3][1];
+	circle.vel_x = 0;
+	circle.vel_y = 0;
 	goties.push(circle);
 
 	circle = initCircle(400, 400, 0, 20, 360,3);
 	circle[3] = [30*root_two, -30*root_two, 0];
+	circle.x = 400 + circle[3][0];
+	circle.y = 400 + circle[3][1];
+	circle.vel_x = 0;
+	circle.vel_y = 0;
 	goties.push(circle);
 
 	// queen
 	circle = initCircle(400, 400, 0, 20, 360,4);
 	circle[3] = [0, 0, 0];
+	circle.x = 400 + circle[3][0];
+	circle.y = 400 + circle[3][1];
+	circle.vel_x = 0;
+	circle.vel_y = 0;
 	goties.push(circle);
 }
 
@@ -482,7 +550,11 @@ function makeStriker() {
 	// striker
 	strikerData = initCircle(400, 400, 0, 25, 360,5);
 	strikerData[3] = [0, 280, 0];
-	console.log(strikerData);
+	strikerData.x = 400;
+	strikerData.y = 680;
+	velocity = new Object();
+	velocity.x = 10;
+	velocity.y = 10;
 }
 
 function drawStriker() {
@@ -494,24 +566,114 @@ function drawGotis() {
 		drawCircle(goties[i]);
 }
 
-function main() {
-	/*
-	if (triangleData.translation[0] < 1000) {
-		triangleData.translation[0] += 1.0;
-		triangleData.translation[1] += 1.0;
-	} else {
-		triangleData.translation[0] = -100;
-		triangleData.translation[1] = -100;
+function moveStriker() {
+	strikerData.x += velocity.x;
+	strikerData.y += velocity.y;
+	
+	strikerData[3][0] += velocity.x;
+	strikerData[3][1] += velocity.y;
+}
+
+function checkBorderCollision() {
+	var x = strikerData.x;
+	var y = strikerData.y;
+	if (x >= 750) {
+		velocity.x = -(velocity.x);
+	} else if ( x <= 50) {
+		velocity.x = -(velocity.x);
+	} else if ( y >= 750) {
+		velocity.y = -(velocity.y);
+	} else if ( y <= 50) {
+		velocity.y = -(velocity.y);
 	}
-	*/
+
+	for (var i=0; i<9; i++) {
+		x = goties[i].x;
+		y = goties[i].y;
+		if (x >= 750) {
+			goties[i].vel_x = -(goties[i].vel_x);
+		} else if ( x <= 50) {
+			goties[i].vel_x = -(goties[i].vel_x);
+		} else if ( y >= 750) {
+			goties[i].vel_y = -(goties[i].vel_y);
+		} else if ( y <= 50) {
+			console.log("yes");
+			goties[i].vel_y = -(goties[i].vel_y);
+		}	
+	}
+}
+
+function checkCollisionWithGotis() {
+	var distance;
+	var x1, y1, x2, y2;
+	var vx, vy;
+	var v, velo;
+	for (var i=0; i<9; i++) {
+		distance = (strikerData.x - goties[i].x) * (strikerData.x - goties[i].x)
+			+ (strikerData.y - goties[i].y) * (strikerData.y - goties[i].y);
+
+		if (distance <= 2025) {
+			vx = goties[i].vel_x;
+			vy = goties[i].vel_y;
+			/*vx = (goties[i].vel_x + velocity.x)/2;
+			vy = (goties[i].vel_y + velocity.y)/2;
+			v = vx*vx + vy*vy;
+			velo = velocity.x * velocity.x + velocity.y * velocity.y;
+			if (v > velo) {
+				e = 2/3;
+			} else {
+				e = 1/3;
+			}*/
+
+			goties[i].vel_x = velocity.x;
+			goties[i].vel_y = velocity.y;
+			
+			velocity.x = vx;
+			velocity.y = vy;
+		}
+	}
+	for (var i=0; i<9; i++) {
+		x1 = goties[i].x;
+		y1 = goties[i].y;
+		for (var j=0; j<9; j++) {
+			x2 = goties[j].x;
+			y2 = goties[j].y;
+			distance = (x1 - x2) * (x1 - x2)
+				+ (y1 - y2) * (y1 - y2);
+
+			if (distance <= 2000) {
+				vx = goties[i].vel_x;
+				vy = goties[i].vel_y;
+				
+				goties[i].vel_x = goties[j].vel_x;
+				goties[i].vel_y = goties[j].vel_y;
+				
+				goties[j].vel_x = vx;
+				goties[j].vel_y = vy;
+			}
+		}
+	}
+}
+
+function moveGoties() {
+	for (var i=0; i<9; i++) {
+		goties[i].x += goties[i].vel_x;
+		goties[i].y += goties[i].vel_y;
+	
+		goties[i][3][0] += goties[i].vel_x;
+		goties[i][3][1] += goties[i].vel_y;
+	}	
+}
+
+function main() {
+	if (isStrikerMoving)
+		moveStriker();
 	draw();
+	checkBorderCollision();
+	checkCollisionWithGotis();
+	moveGoties();
 }
 function draw() {
-	
-	//drawTriangle(triangleData);
-	//drawCircle(circleData);
-	//drawRect(rectData);
-
 	drawBoardBorder();
 	drawCentralCircle();
 	drawGotis();
