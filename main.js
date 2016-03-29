@@ -18,6 +18,8 @@ var centralCircle = [];
 var goties = [];
 var strikerData;
 
+var holes = [];
+
 var isStrikerMoving = false;
 var releaseAngle = 0;
 var velocity;
@@ -311,6 +313,13 @@ function initCircle(x, y, z, radius, num_triangle, isColor = 0) {
 		0, 109/255, 102/255, 1
 	];
 
+	var hole_color = [
+		80/255 ,4/255, 11/255, 1,
+		80/255 ,4/255, 11/255, 1,
+		80/255 ,4/255, 11/255, 1,
+		80/255 ,4/255, 11/255, 1
+	];
+
 	for (var i=1; i<=num_triangle; i++) {
 		vertex = [
 			x, y, z,
@@ -331,6 +340,8 @@ function initCircle(x, y, z, radius, num_triangle, isColor = 0) {
 			colours = colours.concat(queen_goti);
 		else if (isColor == 5)
 			colours = colours.concat(striker);
+		else if (isColor == 6)
+			colours = colours.concat(hole_color);
 	}
 	
 	var vertexBuffer = gl.createBuffer();
@@ -428,6 +439,7 @@ function initShapes() {
 	makeCentralCircle();
 	makeGotis();
 	makeStriker();
+	makeHoles();
 }
 
 function makeBoardBorder() {
@@ -562,8 +574,18 @@ function drawStriker() {
 }
 
 function drawGotis() {
-	for (var i=0; i<9; i++)
+	for (var i=0; i<goties.length; i++)
 		drawCircle(goties[i]);
+}
+
+function resetStriker() {
+	strikerData[3] = [0, 280, 0];
+	strikerData.x = 400;
+	strikerData.y = 680;
+	velocity = new Object();
+	velocity.x = 10;
+	velocity.y = 10;
+	isStrikerMoving = false;
 }
 
 function moveStriker() {
@@ -587,7 +609,7 @@ function checkBorderCollision() {
 		velocity.y = -(velocity.y);
 	}
 
-	for (var i=0; i<9; i++) {
+	for (var i=0; i<goties.length; i++) {
 		x = goties[i].x;
 		y = goties[i].y;
 		if (x >= 750) {
@@ -608,7 +630,7 @@ function checkCollisionWithGotis() {
 	var x1, y1, x2, y2;
 	var vx, vy;
 	var v, velo;
-	for (var i=0; i<9; i++) {
+	for (var i=0; i<goties.length; i++) {
 		distance = (strikerData.x - goties[i].x) * (strikerData.x - goties[i].x)
 			+ (strikerData.y - goties[i].y) * (strikerData.y - goties[i].y);
 
@@ -632,10 +654,10 @@ function checkCollisionWithGotis() {
 			velocity.y = vy;
 		}
 	}
-	for (var i=0; i<9; i++) {
+	for (var i=0; i<goties.length; i++) {
 		x1 = goties[i].x;
 		y1 = goties[i].y;
-		for (var j=0; j<9; j++) {
+		for (var j=0; j<goties.length; j++) {
 			x2 = goties[j].x;
 			y2 = goties[j].y;
 			distance = (x1 - x2) * (x1 - x2)
@@ -656,13 +678,64 @@ function checkCollisionWithGotis() {
 }
 
 function moveGoties() {
-	for (var i=0; i<9; i++) {
+	for (var i=0; i<goties.length; i++) {
 		goties[i].x += goties[i].vel_x;
 		goties[i].y += goties[i].vel_y;
 	
 		goties[i][3][0] += goties[i].vel_x;
 		goties[i][3][1] += goties[i].vel_y;
 	}	
+}
+
+function doesFall() {
+	var distance;
+	var x1, y1, x2, y2;
+	for (var i=0; i<goties.length; i++) {
+		x1 = goties[i].x;
+		y1 = goties[i].y;
+		for (var j=0; j<4; j++) {
+			x2 = holes[j].x;
+			y2 = holes[j].y;
+			distance = (x1- x2) * (x1 - x2) + (y1 - y2) * (y1 - y2);
+
+			if (distance <= 2500) {
+				goties.splice(i, 1);
+				console.log("goal");
+				resetStriker();
+			}
+		}
+	}
+}
+
+function makeHoles() {
+	var hole = initCircle(400, 400, 0, 30, 360,6);
+	hole[3] = [-320, -320, 0];
+	hole.x = 400 + hole[3][0];
+	hole.y = 400 + hole[3][1];
+	holes.push(hole);
+
+	hole = initCircle(400, 400, 0, 30, 360,6);
+	hole[3] = [320, 320, 0];
+	hole.x = 400 + hole[3][0];
+	hole.y = 400 + hole[3][1];
+	holes.push(hole);
+
+	hole = initCircle(400, 400, 0, 30, 360,6);
+	hole[3] = [-320, 320, 0];
+	hole.x = 400 + hole[3][0];
+	hole.y = 400 + hole[3][1];
+	holes.push(hole);
+
+	hole = initCircle(400, 400, 0, 30, 360,6);
+	hole[3] = [320, -320, 0];
+	hole.x = 400 + hole[3][0];
+	hole.y = 400 + hole[3][1];
+	holes.push(hole);
+}
+
+function drawHoles() {
+	for (var i=0; i<4; i++)
+		drawCircle(holes[i]);
 }
 
 function main() {
@@ -672,9 +745,11 @@ function main() {
 	checkBorderCollision();
 	checkCollisionWithGotis();
 	moveGoties();
+	doesFall();
 }
 function draw() {
 	drawBoardBorder();
+	drawHoles();
 	drawCentralCircle();
 	drawGotis();
 	drawStriker();
