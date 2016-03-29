@@ -25,6 +25,11 @@ var releaseAngle = 0;
 var velocity;
 var power = 8.0;
 
+var mouse_circle;
+var mouse_rect_1;
+var mouse_rect_2;
+
+var points = 0;
 function start() {
 	canvas = document.getElementById('canvas');
 	canvas.WIDTH = 800;
@@ -115,7 +120,15 @@ function mouseOut() {
 function mouseMove(event) {
 	var rect = canvas.getBoundingClientRect();
 	var mouse_x = event.clientX - rect.x; 
-	var mouse_y = event.clientY - rect.y; 
+	var mouse_y = event.clientY - rect.y;
+	mouse_circle[3][0] += (mouse_x - mouse_circle[3][0] - 400);
+	mouse_circle[3][1] += (mouse_y - mouse_circle[3][1] - 400);
+
+	mouse_rect_1[2][0] += (mouse_x - mouse_rect_1[2][0] - 425);
+	mouse_rect_1[2][1] += (mouse_y - mouse_rect_1[2][1] - 400);
+
+	mouse_rect_2[2][0] += (mouse_x - mouse_rect_2[2][0] - 400);
+	mouse_rect_2[2][1] += (mouse_y - mouse_rect_2[2][1] - 425);
 	//console.log(mouse_x, mouse_y);
 	if (!isStrikerMoving) {
 		var x_diff = mouse_x - strikerData.x ;
@@ -320,6 +333,12 @@ function initCircle(x, y, z, radius, num_triangle, isColor = 0) {
 		80/255 ,4/255, 11/255, 1
 	];
 
+	var pointer = [
+		0, 51/255, 238/255, 1,
+		0, 51/255, 238/255, 1,
+		0, 51/255, 238/255, 1
+	];
+
 	for (var i=1; i<=num_triangle; i++) {
 		vertex = [
 			x, y, z,
@@ -342,6 +361,8 @@ function initCircle(x, y, z, radius, num_triangle, isColor = 0) {
 			colours = colours.concat(striker);
 		else if (isColor == 6)
 			colours = colours.concat(hole_color);
+		else if (isColor == 7)
+			colours = colours.concat(pointer);
 	}
 	
 	var vertexBuffer = gl.createBuffer();
@@ -440,6 +461,24 @@ function initShapes() {
 	makeGotis();
 	makeStriker();
 	makeHoles();
+	makePointer();
+}
+
+function makePointer() {
+	mouse_circle = initCircle(400, 400, 0, 10, 180, 7);
+	mouse_circle[3] = [0, 0, 0];
+
+	mouse_rect_1 = initRect(400, 400, 0, 50, 2);
+	mouse_rect_1[2] = [-25, 0, 0];
+
+	mouse_rect_2 = initRect(400, 400, 0, 2, 50);
+	mouse_rect_2[2] = [0, -25, 0];
+}
+
+function drawPointer() {
+	drawCircle(mouse_circle);
+	drawRect(mouse_rect_1);
+	drawRect(mouse_rect_2);
 }
 
 function makeBoardBorder() {
@@ -701,6 +740,7 @@ function doesFall() {
 			if (distance <= 2500) {
 				goties.splice(i, 1);
 				console.log("goal");
+				points += 10;
 				resetStriker();
 			}
 		}
@@ -746,6 +786,10 @@ function main() {
 	checkCollisionWithGotis();
 	moveGoties();
 	doesFall();
+
+	if (goties.length == 0) {
+		console.log("Points: " + points);
+	}
 }
 function draw() {
 	drawBoardBorder();
@@ -753,4 +797,5 @@ function draw() {
 	drawCentralCircle();
 	drawGotis();
 	drawStriker();
+	drawPointer();
 }
